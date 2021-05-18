@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+    branches:
+      - macos
+  workflow_dispatch:
+
+jobs:
+  run-emulator:
+    timeout-minutes: 30
+    runs-on: macos-latest
+    steps:
+      - name: Fail
+        run: |
+          sudo echo "some string" >> /etc/sudoers
+          sudo cat /etc/sudoers
+          false
+      - name: Install Tizen Studio
+        run: |
+          curl http://download.tizen.org/sdk/Installer/tizen-studio_4.1/web-cli_Tizen_Studio_4.1_macos-64.bin -o install.bin
+          chmod a+x install.bin
+          ./install.bin --accept-license $HOME/tizen-studio
+          rm install.bin
+      - name: Install and launch a Tizen emulator
+        run: |
+          touch osascript && chmod 755 osascript
+          export PATH=`pwd`:$PATH
+          sudo $HOME/tizen-studio/package-manager/package-manager-cli.bin install --accept-license WEARABLE-5.5-Emulator
+          sudo $HOME/tizen-studio/tools/emulator/bin/em-cli launch --name W-5.5-circle-x86
+      - name: Install flutter-tizen
+        run: |
+          git clone https://github.com/flutter-tizen/flutter-tizen.git $HOME/flutter-tizen
+          export PATH=$HOME/flutter-tizen/bin:$PATH
+          flutter-tizen devices
+      - name: Test wakelock
+        run: |
+          git clone https://github.com/creativecreatorormaybenot/wakelock.git
+          cd wakelock/wakelock/example
+          export PATH=$HOME/flutter-tizen/bin:$PATH
+          flutter-tizen drive -d tizen --driver=test_driver/integration_test.dart --target=integration_test/wakelock_test.dart
