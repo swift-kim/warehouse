@@ -7,25 +7,22 @@ on:
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
+    if: ${{ false }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Docker
-        run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-          sudo apt update
-          sudo apt install qemu binfmt-support qemu-user-static
+      - uses: docker/setup-qemu-action@v1
+        name: Set up QEMU
+        with:
+          platforms: arm,arm64
       - name: Build Docker image from Tizen rootfs
         run: |
           mkdir image && cd image
-          wget -q http://download.tizen.org/snapshots/tizen/6.5-unified/latest/images/standard/tizen-headed-armv7l/tizen-6.5-unified_20220212.1_tizen-headed-armv7l.tar.gz
-          tar zxf tizen-6.5-unified_20220212.1_tizen-headed-armv7l.tar.gz
-          mkdir tmp
-          sudo mount rootfs.img tmp
-          cd tmp
-          sudo tar -cf ../rootfs.tar *
-          cd ..
-          sudo umount tmp
-          docker import rootfs.tar rootfs
+          wget -q http://download.tizen.org/releases/milestone/tizen/unified/tizen-unified_20211014.1/images/standard/tizen-headed-armv7l/tizen-unified_20211014.1_tizen-headed-armv7l.tar.gz
+          tar zxf tizen-unified_20211014.1_tizen-headed-armv7l.tar.gz
+          mkdir rootfs
+          sudo mount rootfs.img rootfs
+          sudo tar -cC rootfs . | docker import - tizen-headed-armv7l
+          sudo umount rootfs
       - name: Run
         run: |
           docker run --rm -t rootfs uname -a
