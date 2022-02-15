@@ -7,23 +7,29 @@ on:
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
-    if: ${{ false }}
+    strategy:
+      matrix:
+        arch: [armv7l, aarch64]
+    env:
+      NAME: tizen-headed-{{ matrix.arch }}
     steps:
       - uses: actions/checkout@v2
       - uses: docker/setup-qemu-action@v1
-        name: Set up QEMU
         with:
           platforms: arm,arm64
-      - name: Build Docker image from Tizen rootfs
+      - name: Build Docker images
+        env:
+          REPO_URL: http://download.tizen.org/releases/milestone/tizen/unified
+          OBS_ID: tizen-unified_20211014.1
         run: |
-          mkdir image && cd image
-          wget -q http://download.tizen.org/releases/milestone/tizen/unified/tizen-unified_20211014.1/images/standard/tizen-headed-armv7l/tizen-unified_20211014.1_tizen-headed-armv7l.tar.gz
-          tar zxf tizen-unified_20211014.1_tizen-headed-armv7l.tar.gz
+          mkdir tmp && cd tmp
+          wget -q ${REPO_URL}/${OBS_ID}/images/standard/${NAME}/${OBS_ID}_${NAME}.tar.gz
+          tar -zxf ${OBS_ID}_${NAME}.tar.gz
           mkdir rootfs
           sudo mount rootfs.img rootfs
-          sudo tar -cC rootfs . | docker import - tizen-headed-armv7l
+          sudo tar -cC rootfs . | docker import - ${NAME}
           sudo umount rootfs
       - name: Run
         run: |
           docker run --rm -t rootfs uname -a
-          docker run --rm -t -v `pwd`:/engine rootfs /engine/flutter_tizen_unittests
+          docker run --rm -t -v `pwd`:/engine ${NAME} /engine/flutter_tizen_unittests
