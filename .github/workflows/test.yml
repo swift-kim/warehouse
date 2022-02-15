@@ -6,15 +6,27 @@ on:
 
 jobs:
   run-unittests:
-    name: armv7
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up
+      - name: Set up Docker
         run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           sudo apt update
           sudo apt install qemu binfmt-support qemu-user-static
+      - name: Build Docker image from Tizen rootfs
+        run: |
+          mkdir image && cd image
+          wget http://download.tizen.org/snapshots/tizen/6.5-unified/latest/images/standard/tizen-headless-armv7l/tizen-6.5-unified_20220212.1_tizen-headless-armv7l.tar.gz
+          tar zxf tizen-6.5-unified_20220212.1_tizen-headless-armv7l.tar.gz
+          mkdir tmp
+          sudo mount rootfs.img tmp
+          cd tmp
+          sudo tar -cf ../rootfs.tar *
+          cd ..
+          sudo umount tmp
+          docker import rootfs.tar rootfs
       - name: Run
         run: |
-          docker run --rm -t arm64v8/ubuntu uname -a
+          docker run --rm -t rootfs uname -a
+          docker run --rm -t -v `pwd`:/engine rootfs /engine/flutter_tizen_unittests
