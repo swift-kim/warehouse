@@ -28,5 +28,5 @@ jobs:
           sudo umount rootfs
       - name: Run
         run: |
-          docker run --rm -t rootfs uname -a
+          docker run --rm -t ${NAME} uname -a
           docker run --rm -t -v `pwd`:/engine ${NAME} /engine/flutter_tizen_unittests
