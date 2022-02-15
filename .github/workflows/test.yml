@@ -23,13 +23,14 @@ jobs:
       - name: Push image
         run: |
           docker tag ${IMAGE}:latest ghcr.io/swift-kim/${IMAGE}:latest
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u swift-kim --password-stdin
           docker push ghcr.io/swift-kim/${IMAGE}:latest
 
   run-tests:
     needs: build-docker
     runs-on: ubuntu-latest
     env:
-      IMAGE: tizen-headed-aarch64
+      TAG: ghcr.io/swift-kim/tizen-headed-aarch64
     steps:
       - uses: actions/checkout@v2
       - uses: docker/setup-qemu-action@v1
@@ -37,5 +38,5 @@ jobs:
           platforms: arm64
       - name: Run unittests
         run: |
-          docker pull ghcr.io/swift-kim/${IMAGE}:latest
-          docker run --rm -t -v `pwd`:/root swift-kim/${IMAGE} /root/flutter_tizen_unittests
+          docker pull ${TAG}:latest
+          docker run --rm -t -v `pwd`:/root ${TAG} /root/flutter_tizen_unittests
