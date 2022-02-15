@@ -5,28 +5,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-unittests:
+  build-docker:
     runs-on: ubuntu-latest
     env:
-      NAME: tizen-headed-aarch64
+      REPO_URL: http://download.tizen.org/releases/milestone/tizen/unified
+      BUILD_ID: tizen-unified_20211014.1
+      IMAGE: tizen-headed-aarch64
+    steps:
+      - name: Build image
+        run: |
+          wget -q ${REPO_URL}/${BUILD_ID}/images/standard/${IMAGE}/${BUILD_ID}_${IMAGE}.tar.gz
+          tar -zxf ${BUILD_ID}_${IMAGE}.tar.gz
+          mkdir rootfs
+          sudo mount rootfs.img rootfs
+          sudo tar -cC rootfs . | docker import - ${IMAGE}
+          sudo umount rootfs
+      - name: Push image
+        run: |
+          docker tag ${IMAGE}:latest ghcr.io/swift-kim/${IMAGE}:latest
+          docker push ghcr.io/swift-kim/${IMAGE}:latest
+
+  run-tests:
+    needs: build-docker
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: tizen-headed-aarch64
     steps:
       - uses: actions/checkout@v2
       - uses: docker/setup-qemu-action@v1
         with:
           platforms: arm64
-      - name: Build Docker image
-        env:
-          REPO_URL: http://download.tizen.org/releases/milestone/tizen/unified
-          OBS_ID: tizen-unified_20211014.1
+      - name: Run unittests
         run: |
-          mkdir tmp && cd tmp
-          wget -q ${REPO_URL}/${OBS_ID}/images/standard/${NAME}/${OBS_ID}_${NAME}.tar.gz
-          tar -zxf ${OBS_ID}_${NAME}.tar.gz
-          mkdir rootfs
-          sudo mount rootfs.img rootfs
-          sudo tar -cC rootfs . | docker import - ${NAME}
-          sudo umount rootfs
-      - name: Run
-        run: |
-          docker run --rm -t ${NAME} uname -a
-          docker run --rm -t -v `pwd`:/engine ${NAME} /engine/flutter_tizen_unittests
+          docker pull ghcr.io/swift-kim/${IMAGE}:latest
+          docker run --rm -t -v `pwd`:/root swift-kim/${IMAGE} /root/flutter_tizen_unittests
