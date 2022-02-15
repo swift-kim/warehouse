@@ -7,17 +7,14 @@ on:
 jobs:
   run-unittests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [armv7l, aarch64]
     env:
-      NAME: tizen-headed-{{ matrix.arch }}
+      NAME: tizen-headed-aarch64
     steps:
       - uses: actions/checkout@v2
       - uses: docker/setup-qemu-action@v1
         with:
-          platforms: arm,arm64
-      - name: Build Docker images
+          platforms: arm64
+      - name: Build Docker image
         env:
           REPO_URL: http://download.tizen.org/releases/milestone/tizen/unified
           OBS_ID: tizen-unified_20211014.1
