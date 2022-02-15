@@ -17,8 +17,8 @@ jobs:
       - name: Build Docker image from Tizen rootfs
         run: |
           mkdir image && cd image
-          wget http://download.tizen.org/snapshots/tizen/6.5-unified/latest/images/standard/tizen-headless-armv7l/tizen-6.5-unified_20220212.1_tizen-headless-armv7l.tar.gz
-          tar zxf tizen-6.5-unified_20220212.1_tizen-headless-armv7l.tar.gz
+          wget -q http://download.tizen.org/snapshots/tizen/6.5-unified/latest/images/standard/tizen-headed-armv7l/tizen-6.5-unified_20220212.1_tizen-headed-armv7l.tar.gz
+          tar zxf tizen-6.5-unified_20220212.1_tizen-headed-armv7l.tar.gz
           mkdir tmp
           sudo mount rootfs.img tmp
           cd tmp
