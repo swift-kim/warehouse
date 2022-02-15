@@ -12,6 +12,11 @@ jobs:
       BUILD_ID: tizen-unified_20211014.1
       IMAGE: tizen-headed-aarch64
     steps:
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image
         run: |
           wget -q ${REPO_URL}/${BUILD_ID}/images/standard/${IMAGE}/${BUILD_ID}_${IMAGE}.tar.gz
@@ -23,7 +28,6 @@ jobs:
       - name: Push image
         run: |
           docker tag ${IMAGE}:latest ghcr.io/swift-kim/${IMAGE}:latest
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u swift-kim --password-stdin
           docker push ghcr.io/swift-kim/${IMAGE}:latest
 
   run-tests:
