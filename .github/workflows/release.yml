@@ -1,0 +1,48 @@
+name: release
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: set variables
+        run: |
+          echo "TAG_NAME=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
+          echo "ENGINE_VER=2.10.1" >> $GITHUB_ENV
+
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: ${{ env.ENGINE_VER }} (${{ env.TAG_NAME }})
+          body: |
+            Flutter engine ${{ env.ENGINE_VER }} for Tizen
+
+            https://github.com/${{ github.repository_owner }}/engine/actions/runs/${{ github.run_id }}
+
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./flutter_tizen_unittests
+          asset_name: my-artifact.zip
+          asset_content_type: application/zip
+
+      # - uses: softprops/action-gh-release@v1
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   with:
+      #     body: |
+      #       Changes in this Release
+      #       - First Change
+      #     token: ${{ secrets.TIZENAPI_TOKEN }}
+      #   env:
+      #     GITHUB_REPOSITORY: swift-kim/warehouse
